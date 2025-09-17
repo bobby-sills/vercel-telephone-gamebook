@@ -1,5 +1,6 @@
 // Shared utilities for serverless functions
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import twilio from 'twilio';
 import { createClient } from '@supabase/supabase-js';
 
@@ -123,6 +124,107 @@ export async function deleteUserSession(phoneNumber) {
     console.error('Unexpected error deleting user session:', err);
     return false;
   }
+}
+
+// Security functions
+const rateLimitMap = new Map();
+
+// Validate Twilio webhook requests
+export function validateTwilioRequest(req) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!authToken) {
+    console.warn('TWILIO_AUTH_TOKEN not set - skipping validation');
+    return true; // Allow requests if auth token not configured
+  }
+
+  const signature = req.headers['x-twilio-signature'];
+  if (!signature) {
+    console.error('Missing Twilio signature header');
+    return false;
+  }
+
+  // Build the URL
+  const protocol = req.headers['x-forwarded-proto'] || 'https';
+  const host = req.headers.host;
+  const url = `${protocol}://${host}${req.url}`;
+
+  // Build the body string
+  let bodyString = '';
+  if (req.body && typeof req.body === 'object') {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(req.body)) {
+      params.append(key, value);
+    }
+    bodyString = params.toString();
+  }
+
+  // Create expected signature
+  const data = url + bodyString;
+  const expectedSignature = crypto
+    .createHmac('sha1', authToken)
+    .update(Buffer.from(data, 'utf-8'))
+    .digest('base64');
+
+  const isValid = signature === expectedSignature;
+
+  if (!isValid) {
+    console.error('Invalid Twilio signature', {
+      expected: expectedSignature,
+      received: signature,
+      url,
+      bodyString
+    });
+  }
+
+  return isValid;
+}
+
+// Rate limiting per phone number
+export function checkRateLimit(phoneNumber, maxRequests = 20, windowMs = 60000) {
+  if (!phoneNumber) return false;
+
+  const now = Date.now();
+  const key = phoneNumber;
+
+  // Clean up old entries
+  for (const [phone, data] of rateLimitMap.entries()) {
+    if (now - data.resetTime > windowMs) {
+      rateLimitMap.delete(phone);
+    }
+  }
+
+  // Get or create rate limit data
+  let limitData = rateLimitMap.get(key);
+  if (!limitData || now - limitData.resetTime > windowMs) {
+    limitData = {
+      count: 0,
+      resetTime: now
+    };
+  }
+
+  limitData.count++;
+  rateLimitMap.set(key, limitData);
+
+  const isAllowed = limitData.count <= maxRequests;
+
+  if (!isAllowed) {
+    console.warn(`Rate limit exceeded for ${phoneNumber}: ${limitData.count}/${maxRequests}`);
+  }
+
+  return isAllowed;
+}
+
+// Validate phone number format (basic validation)
+export function validatePhoneNumber(phoneNumber) {
+  if (!phoneNumber) return false;
+
+  // Remove spaces and check for valid format
+  const cleaned = phoneNumber.replace(/\s+/g, '');
+
+  // Must start with + and have 10-15 digits
+  const phoneRegex = /^\+\d{10,15}$/;
+  return phoneRegex.test(cleaned);
 }
 
 export { VoiceResponse };

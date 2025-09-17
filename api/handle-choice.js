@@ -1,5 +1,5 @@
 // Handle user's choice input
-import { VoiceResponse, storyNodes, getUserSession, updateUserSession } from './shared.js';
+import { VoiceResponse, storyNodes, getUserSession, updateUserSession, validateTwilioRequest, checkRateLimit, validatePhoneNumber } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -7,9 +7,33 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Validate Twilio request signature
+  if (!validateTwilioRequest(req)) {
+    console.error('🚫 Invalid Twilio signature');
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
   const twiml = new VoiceResponse();
   const phoneNumber = req.body.From;
   const choice = req.body.Digits;
+
+  // Validate phone number format
+  if (!validatePhoneNumber(phoneNumber)) {
+    console.error(`🚫 Invalid phone number format: ${phoneNumber}`);
+    twiml.say({ voice: 'alice' }, "Sorry, there was an issue with your phone number.");
+    twiml.hangup();
+    res.setHeader('Content-Type', 'text/xml');
+    return res.status(200).send(twiml.toString());
+  }
+
+  // Check rate limit (30 requests per minute for choices - higher than voice calls)
+  if (!checkRateLimit(phoneNumber, 30, 60000)) {
+    console.error(`🚫 Rate limit exceeded for: ${phoneNumber}`);
+    twiml.say({ voice: 'alice' }, "You're pressing buttons too quickly. Please wait a moment.");
+    twiml.redirect('/api/voice');
+    res.setHeader('Content-Type', 'text/xml');
+    return res.status(200).send(twiml.toString());
+  }
 
   console.log(`🎮 User ${phoneNumber} chose: ${choice}`);
 

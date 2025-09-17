@@ -1,5 +1,5 @@
 // Main webhook endpoint for incoming calls
-import { VoiceResponse, storyNodes, getUserSession, updateUserSession, deleteUserSession } from './shared.js';
+import { VoiceResponse, storyNodes, getUserSession, updateUserSession, deleteUserSession, validateTwilioRequest, checkRateLimit, validatePhoneNumber } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -7,8 +7,32 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Validate Twilio request signature
+  if (!validateTwilioRequest(req)) {
+    console.error('🚫 Invalid Twilio signature');
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
   const twiml = new VoiceResponse();
   const phoneNumber = req.body.From;
+
+  // Validate phone number format
+  if (!validatePhoneNumber(phoneNumber)) {
+    console.error(`🚫 Invalid phone number format: ${phoneNumber}`);
+    twiml.say({ voice: 'alice' }, "Sorry, there was an issue with your phone number.");
+    twiml.hangup();
+    res.setHeader('Content-Type', 'text/xml');
+    return res.status(200).send(twiml.toString());
+  }
+
+  // Check rate limit (20 requests per minute per phone number)
+  if (!checkRateLimit(phoneNumber, 20, 60000)) {
+    console.error(`🚫 Rate limit exceeded for: ${phoneNumber}`);
+    twiml.say({ voice: 'alice' }, "You're calling too frequently. Please wait a moment and try again.");
+    twiml.hangup();
+    res.setHeader('Content-Type', 'text/xml');
+    return res.status(200).send(twiml.toString());
+  }
 
   console.log(`📞 Incoming call from: ${phoneNumber}`);
 
