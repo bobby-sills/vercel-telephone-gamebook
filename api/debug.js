@@ -14,12 +14,16 @@ function maskPhoneNumber(phone) {
 }
 
 export default async function handler(req, res) {
-  // Add basic authentication check
+  // Require authentication - no public access
   const authHeader = req.headers.authorization;
   const expectedAuth = process.env.DEBUG_AUTH_TOKEN;
 
-  if (expectedAuth && authHeader !== `Bearer ${expectedAuth}`) {
-    return res.status(401).json({ error: 'Unauthorized - Debug access restricted' });
+  if (!expectedAuth) {
+    return res.status(503).json({ error: 'Debug endpoint not configured' });
+  }
+
+  if (!authHeader || authHeader !== `Bearer ${expectedAuth}`) {
+    return res.status(401).json({ error: 'Unauthorized - Authentication required' });
   }
 
   try {
@@ -32,20 +36,12 @@ export default async function handler(req, res) {
     if (error) {
       res.status(500).json({ error: error.message });
     } else {
-      // Mask phone numbers for privacy
-      const maskedSessions = data.map(session => ({
-        id: session.id,
-        phone_number: maskPhoneNumber(session.phone_number),
-        current_node: session.current_node,
-        created_at: session.created_at,
-        updated_at: session.updated_at
-      }));
-
+      // Show real data since you're authenticated
       res.status(200).json({
-        sessions: maskedSessions,
+        sessions: data,
         count: data.length,
         supabase_url: process.env.SUPABASE_URL ? 'Set' : 'Missing',
-        note: 'Phone numbers are masked for privacy'
+        note: 'Authenticated access - showing full data'
       });
     }
   } catch (err) {
