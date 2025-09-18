@@ -72,6 +72,26 @@ export async function reloadStory(newStoryName = null) {
   return currentStory;
 }
 
+// Generate story selection menu dynamically
+export async function createStorySelectionMenu() {
+  const { availableStories } = await import('../stories/index.js');
+  const storyList = Object.entries(availableStories);
+
+  let menuText = 'Welcome to the Telephone Gamebook! Please choose your adventure: ';
+  const choices = {};
+
+  storyList.forEach(([key, info], index) => {
+    const number = (index + 1).toString();
+    menuText += `Press ${number} for ${info.name}. `;
+    choices[number] = `story_${key}`;
+  });
+
+  return {
+    text: menuText,
+    choices: choices
+  };
+}
+
 // Create Supabase client
 export function createSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -106,7 +126,7 @@ export async function getUserSession(phoneNumber) {
   }
 }
 
-export async function updateUserSession(phoneNumber, currentNode, previousNode = null) {
+export async function updateUserSession(phoneNumber, currentNode, previousNode = null, storyName = null) {
   try {
     const supabase = createSupabaseClient();
     const updateData = {
@@ -118,6 +138,11 @@ export async function updateUserSession(phoneNumber, currentNode, previousNode =
     // Store previous node if provided (for continue/restart functionality)
     if (previousNode !== null) {
       updateData.previous_node = previousNode;
+    }
+
+    // Store story name if provided
+    if (storyName !== null) {
+      updateData.story_name = storyName;
     }
 
     const { error } = await supabase

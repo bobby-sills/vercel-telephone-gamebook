@@ -1,5 +1,5 @@
 // Handle user's choice input
-import { VoiceResponse, getStoryNodes, getUserSession, updateUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
+import { VoiceResponse, getStoryNodes, getUserSession, updateUserSession, checkRateLimit, validatePhoneNumber, createStorySelectionMenu, reloadStory } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -36,9 +36,35 @@ export default async function handler(req, res) {
     const userSession = await getUserSession(phoneNumber);
 
     if (userSession) {
-      const storyNodes = await getStoryNodes();
-      const currentNode = storyNodes[userSession.current_node];
-      const nextNode = currentNode.choices[choice];
+      let currentNode;
+      let nextNode;
+
+      // Handle story selection menu
+      if (userSession.current_node === 'story_selection') {
+        const storyMenu = await createStorySelectionMenu();
+        currentNode = storyMenu;
+        nextNode = currentNode.choices[choice];
+
+        if (nextNode && nextNode.startsWith('story_')) {
+          // Extract story name from choice (e.g., 'story_mystic-forest' -> 'mystic-forest')
+          const selectedStory = nextNode.replace('story_', '');
+          console.log(`🎭 User ${phoneNumber} selected story: ${selectedStory}`);
+
+          // Load the selected story
+          await reloadStory(selectedStory);
+
+          // Update user session with story choice and start the adventure
+          await updateUserSession(phoneNumber, 'start', null, selectedStory);
+          twiml.redirect('/api/voice');
+          res.setHeader('Content-Type', 'text/xml');
+          return res.status(200).send(twiml.toString());
+        }
+      } else {
+        // Normal story flow
+        const storyNodes = await getStoryNodes();
+        currentNode = storyNodes[userSession.current_node];
+        nextNode = currentNode.choices[choice];
+      }
 
       if (nextNode) {
         // Handle special 'continue_game' choice

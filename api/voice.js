@@ -1,5 +1,5 @@
 // Main webhook endpoint for incoming calls
-import { VoiceResponse, getStoryNodes, getUserSession, updateUserSession, deleteUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
+import { VoiceResponse, getStoryNodes, getUserSession, updateUserSession, deleteUserSession, checkRateLimit, validatePhoneNumber, createStorySelectionMenu, reloadStory } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -35,14 +35,21 @@ export default async function handler(req, res) {
     // Get or create user session
     let userSession = await getUserSession(phoneNumber);
     if (!userSession) {
-      console.log(`🆕 New user, creating session for: ${phoneNumber}`);
-      await updateUserSession(phoneNumber, 'start');
-      userSession = { current_node: 'start' };
+      console.log(`🆕 New user, showing story selection menu for: ${phoneNumber}`);
+      await updateUserSession(phoneNumber, 'story_selection');
+      userSession = { current_node: 'story_selection' };
     } else {
       console.log(`👋 Returning user at node: ${userSession.current_node}`);
+
+      // Load the user's chosen story if they have one
+      if (userSession.story_name) {
+        console.log(`📚 Loading user's story: ${userSession.story_name}`);
+        await reloadStory(userSession.story_name);
+      }
+
       // If user is at start, continue normally
       // If user is in middle of game, offer continue/restart menu
-      if (userSession.current_node !== 'start') {
+      if (userSession.current_node !== 'start' && userSession.current_node !== 'story_selection') {
         console.log('🔄 User has existing progress, showing continue/restart menu');
         // Store their current progress before showing menu
         await updateUserSession(phoneNumber, 'continue_menu', userSession.current_node);
@@ -50,8 +57,16 @@ export default async function handler(req, res) {
       }
     }
 
-    const storyNodes = await getStoryNodes();
-    const currentNode = storyNodes[userSession.current_node];
+    let currentNode;
+
+    // Handle special story selection menu
+    if (userSession.current_node === 'story_selection') {
+      currentNode = await createStorySelectionMenu();
+      console.log('📋 Generated story selection menu');
+    } else {
+      const storyNodes = await getStoryNodes();
+      currentNode = storyNodes[userSession.current_node];
+    }
 
     if (!currentNode) {
       console.error(`❌ Invalid node: ${userSession.current_node}`);

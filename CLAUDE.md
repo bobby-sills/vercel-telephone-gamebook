@@ -41,6 +41,7 @@ The application expects a Supabase table named `user_sessions` with:
 - `phone_number` (primary key) - Caller's phone number
 - `current_node` - Current position in the story
 - `previous_node` (optional) - Previous position for continue/restart functionality
+- `story_name` (optional) - Which story the user has selected
 - `updated_at` - Last update timestamp
 
 ## Key Endpoints
