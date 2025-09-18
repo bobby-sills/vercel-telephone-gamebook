@@ -63,6 +63,10 @@ export default async function handler(req, res) {
     if (userSession.current_node === 'story_selection') {
       currentNode = await createStorySelectionMenu();
       console.log('📋 Generated story selection menu');
+    } else if (userSession.current_node === 'continue_menu') {
+      // Get the continue menu content from story nodes
+      const storyNodes = await getStoryNodes();
+      currentNode = storyNodes['continue_menu'];
     } else {
       const storyNodes = await getStoryNodes();
       currentNode = storyNodes[userSession.current_node];
