@@ -79,6 +79,11 @@ export default async function handler(req, res) {
             await updateUserSession(phoneNumber, 'start');
           }
           twiml.redirect('/api/voice');
+        } else if (nextNode === 'story_selection') {
+          // User wants to go back to story selection
+          console.log(`🔄 User ${phoneNumber} returning to story selection`);
+          await updateUserSession(phoneNumber, 'story_selection');
+          twiml.redirect('/api/voice');
         } else {
           // Valid choice - update user's position
           console.log(`✅ Moving ${phoneNumber} from ${userSession.current_node} to ${nextNode}`);

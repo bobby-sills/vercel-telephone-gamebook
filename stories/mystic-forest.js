@@ -8,10 +8,10 @@ export const storyInfo = {
 
 export const storyNodes = {
   continue_menu: {
-    text: 'Welcome back! I see you were in the middle of an adventure. Press 1 to continue where you left off, or press 2 to start a brand new adventure.',
+    text: 'Welcome back! I see you were in the middle of an adventure. Press 1 to continue where you left off, or press 2 to choose a different adventure.',
     choices: {
       '1': 'continue_game',
-      '2': 'start'
+      '2': 'story_selection'
     }
   },
   start: {
