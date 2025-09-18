@@ -1,6 +1,5 @@
 // Shared utilities for serverless functions
 import dotenv from 'dotenv';
-import crypto from 'crypto';
 import twilio from 'twilio';
 import { createClient } from '@supabase/supabase-js';
 
@@ -129,65 +128,6 @@ export async function deleteUserSession(phoneNumber) {
 // Security functions
 const rateLimitMap = new Map();
 
-// Validate Twilio webhook requests
-export function validateTwilioRequest(req, rawBody) {
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-
-  if (!authToken) {
-    console.warn('TWILIO_AUTH_TOKEN not set - skipping validation');
-    return true; // Allow requests if auth token not configured
-  }
-
-  // Temporarily disable signature validation in serverless environment
-  // due to body parsing issues - re-enable when raw body handling is implemented
-  console.warn('Twilio signature validation temporarily disabled');
-  return true;
-
-  const signature = req.headers['x-twilio-signature'];
-  if (!signature) {
-    console.error('Missing Twilio signature header');
-    return false;
-  }
-
-  // Build the URL - Twilio always uses HTTPS
-  const protocol = 'https';
-  const host = req.headers.host;
-  const url = `${protocol}://${host}${req.url}`;
-
-  // Use the raw body string if provided, otherwise reconstruct from parsed body
-  let bodyString = '';
-  if (rawBody) {
-    bodyString = rawBody;
-  } else if (req.body && typeof req.body === 'object') {
-    // Sort keys for consistent signature validation
-    const sortedKeys = Object.keys(req.body).sort();
-    const params = new URLSearchParams();
-    for (const key of sortedKeys) {
-      params.append(key, req.body[key]);
-    }
-    bodyString = params.toString();
-  }
-
-  // Create expected signature
-  const data = url + bodyString;
-  const expectedSignature = crypto
-    .createHmac('sha1', authToken)
-    .update(Buffer.from(data, 'utf-8'))
-    .digest('base64');
-
-  const isValid = signature === expectedSignature;
-
-  if (!isValid) {
-    console.error('Invalid Twilio signature', {
-      expected: expectedSignature,
-      received: signature,
-      url,
-      bodyString: bodyString.substring(0, 200) + '...' // Truncate for logging
-    });
-  }
-
-  return isValid;
-}
 
 // Rate limiting per phone number
 export function checkRateLimit(phoneNumber, maxRequests = 20, windowMs = 60000) {

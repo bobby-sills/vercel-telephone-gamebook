@@ -1,5 +1,5 @@
 // Handle user's choice input
-import { VoiceResponse, storyNodes, getUserSession, updateUserSession, validateTwilioRequest, checkRateLimit, validatePhoneNumber } from './shared.js';
+import { VoiceResponse, storyNodes, getUserSession, updateUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -7,11 +7,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Validate Twilio request signature
-  if (!validateTwilioRequest(req)) {
-    console.error('🚫 Invalid Twilio signature');
-    return res.status(403).json({ error: 'Unauthorized' });
-  }
 
   const twiml = new VoiceResponse();
   const phoneNumber = req.body.From;
