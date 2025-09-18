@@ -8,21 +8,23 @@ This is a Twilio-based interactive voice adventure game that allows players to n
 
 ## Architecture
 
-- **Single-file Node.js application**: The entire application logic is contained in `server.js`
+- **Serverless Functions**: Application deployed as Vercel serverless functions in `/api` directory
 - **Twilio Voice API**: Handles incoming phone calls and voice responses using TwiML
 - **Supabase Database**: Stores user sessions to maintain game state across calls
-- **Express.js Server**: Provides webhooks for Twilio and debug endpoints
+- **Express.js Server**: Local development server in `server.js` for testing
 
 ### Core Components
 
 - **Story Engine**: Static story nodes defined in `storyNodes` object with text and choice mappings
 - **Session Management**: Database functions to track user progress through the story
-- **Voice Webhooks**: Two main endpoints `/voice` (main game flow) and `/handle-choice` (user input processing)
+- **Voice Webhooks**: Two main endpoints `/api/voice` (main game flow) and `/api/handle-choice` (user input processing)
+- **Security**: Rate limiting and phone number validation to prevent abuse
 
 ## Development Commands
 
-- **Start server**: `npm start` - Runs the production server
+- **Start local server**: `npm start` - Runs the local development server
 - **Development mode**: `npm run dev` - Runs with nodemon for auto-restart on file changes
+- **Code analysis**: `npm run lint` - Check for code issues with ESLint
 - **Install dependencies**: `npm install`
 
 ## Environment Configuration
@@ -41,10 +43,9 @@ The application expects a Supabase table named `user_sessions` with:
 
 ## Key Endpoints
 
-- `POST /voice` - Main Twilio webhook for incoming calls
-- `POST /handle-choice` - Processes user keypad input
-- `GET /` - Health check endpoint
-- `GET /debug` - Database inspection endpoint
+- `POST /api/voice` - Main Twilio webhook for incoming calls
+- `POST /api/handle-choice` - Processes user keypad input
+- `GET /api/index` - Health check endpoint
 
 ## Story Structure
 
@@ -56,7 +57,14 @@ Terminal nodes (game endings) have empty `choices` objects.
 
 ## Development Notes
 
-- The server must be publicly accessible for Twilio webhooks to work
-- Database connection is tested on startup
+- The serverless functions must be publicly accessible for Twilio webhooks to work
+- Database connection is tested on startup (local development only)
 - User sessions are automatically cleaned up when games end
 - Invalid choices prompt users to retry rather than ending the game
+- Rate limiting prevents abuse: 20 calls/minute per phone number for voice, 30/minute for choices
+
+## Debugging
+
+- **Vercel Function Logs**: Monitor calls and errors in Vercel dashboard → Functions → Logs
+- **Supabase Dashboard**: View user sessions and database state directly
+- **Local Development**: Use `npm run dev` with ngrok for testing webhooks locally
