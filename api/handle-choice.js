@@ -1,5 +1,5 @@
 // Handle user's choice input
-import { VoiceResponse, storyNodes, getUserSession, updateUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
+import { VoiceResponse, getStoryNodes, getUserSession, updateUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     const userSession = await getUserSession(phoneNumber);
 
     if (userSession) {
+      const storyNodes = await getStoryNodes();
       const currentNode = storyNodes[userSession.current_node];
       const nextNode = currentNode.choices[choice];
 

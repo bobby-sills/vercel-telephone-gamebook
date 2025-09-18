@@ -1,5 +1,5 @@
 // Main webhook endpoint for incoming calls
-import { VoiceResponse, storyNodes, getUserSession, updateUserSession, deleteUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
+import { VoiceResponse, getStoryNodes, getUserSession, updateUserSession, deleteUserSession, checkRateLimit, validatePhoneNumber } from './shared.js';
 
 export default async function handler(req, res) {
   // Only allow POST requests
@@ -50,6 +50,7 @@ export default async function handler(req, res) {
       }
     }
 
+    const storyNodes = await getStoryNodes();
     const currentNode = storyNodes[userSession.current_node];
 
     if (!currentNode) {

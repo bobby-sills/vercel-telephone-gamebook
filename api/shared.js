@@ -8,52 +8,69 @@ dotenv.config();
 
 const { twiml: { VoiceResponse } } = twilio;
 
-// Story data structure
-export const storyNodes = {
-  continue_menu: {
-    text: 'Welcome back! I see you were in the middle of an adventure. Press 1 to continue where you left off, or press 2 to start a brand new adventure.',
-    choices: {
-      '1': 'continue_game',
-      '2': 'start'
-    }
-  },
-  start: {
-    text: 'Welcome to the Mystic Forest Adventure! You find yourself at a crossroads. Press 1 to go left toward the dark cave, or press 2 to go right toward the sunny meadow.',
-    choices: {
-      '1': 'cave',
-      '2': 'meadow'
-    }
-  },
-  cave: {
-    text: 'You enter the dark cave and hear strange noises. Press 1 to investigate the sounds, or press 2 to turn back.',
-    choices: {
-      '1': 'monster',
-      '2': 'start'
-    }
-  },
-  meadow: {
-    text: 'You walk into a beautiful sunny meadow filled with flowers. Press 1 to pick flowers, or press 2 to rest under a tree.',
-    choices: {
-      '1': 'flowers',
-      '2': 'rest'
-    }
-  },
-  monster: {
-    text: 'Oh no! You\'ve awakened a sleeping dragon! The adventure ends here. Thanks for playing! Goodbye.',
-    choices: {}
-  },
-  flowers: {
-    text: 'You pick beautiful flowers and find a magic potion! You win! Thanks for playing! Goodbye.',
-    choices: {}
-  },
-  rest: {
-    text: 'You rest peacefully and feel refreshed. Press 1 to explore more of the meadow, or press 2 to return to the crossroads.',
-    choices: {
-      '1': 'flowers',
-      '2': 'start'
-    }
+// Story loading system
+async function loadStory(storyName) {
+  try {
+    const story = await import(`../stories/${storyName}.js`);
+    return {
+      info: story.storyInfo,
+      nodes: story.storyNodes
+    };
+  } catch (error) {
+    console.error(`Failed to load story "${storyName}":`, error);
+    // Fallback to default story
+    const defaultStory = await import('../stories/mystic-forest.js');
+    return {
+      info: defaultStory.storyInfo,
+      nodes: defaultStory.storyNodes
+    };
   }
-};
+}
+
+// Get current story from environment variable or default
+const currentStoryName = process.env.STORY_NAME || 'mystic-forest';
+let currentStory = null;
+
+// Load story asynchronously
+async function initializeStory() {
+  if (!currentStory) {
+    currentStory = await loadStory(currentStoryName);
+    console.log(`📚 Loaded story: ${currentStory.info.name} v${currentStory.info.version}`);
+  }
+  return currentStory;
+}
+
+// Export story nodes (will be loaded when first accessed)
+export let storyNodes = null;
+export let storyInfo = null;
+
+// Initialize story on module load
+initializeStory().then(story => {
+  storyNodes = story.nodes;
+  storyInfo = story.info;
+}).catch(error => {
+  console.error('Failed to initialize story:', error);
+});
+
+// Function to get story nodes (ensures story is loaded)
+export async function getStoryNodes() {
+  if (!storyNodes) {
+    const story = await initializeStory();
+    storyNodes = story.nodes;
+    storyInfo = story.info;
+  }
+  return storyNodes;
+}
+
+// Function to reload story (for switching stories)
+export async function reloadStory(newStoryName = null) {
+  const storyName = newStoryName || currentStoryName;
+  currentStory = await loadStory(storyName);
+  storyNodes = currentStory.nodes;
+  storyInfo = currentStory.info;
+  console.log(`🔄 Reloaded story: ${storyInfo.name}`);
+  return currentStory;
+}
 
 // Create Supabase client
 export function createSupabaseClient() {

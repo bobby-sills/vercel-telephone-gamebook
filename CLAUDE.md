@@ -15,7 +15,7 @@ This is a Twilio-based interactive voice adventure game that allows players to n
 
 ### Core Components
 
-- **Story Engine**: Static story nodes defined in `storyNodes` object with text and choice mappings
+- **Story System**: Modular story files in `/stories` directory that can be swapped via environment variable
 - **Session Management**: Database functions to track user progress through the story
 - **Voice Webhooks**: Two main endpoints `/api/voice` (main game flow) and `/api/handle-choice` (user input processing)
 - **Security**: Rate limiting and phone number validation to prevent abuse
@@ -33,6 +33,7 @@ The application requires these environment variables in `.env`:
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_ANON_KEY` - Supabase anonymous key
 - `PORT` - Server port (defaults to 3000)
+- `STORY_NAME` - Which story to load (defaults to 'mystic-forest')
 
 ## Database Schema
 
@@ -48,13 +49,33 @@ The application expects a Supabase table named `user_sessions` with:
 - `POST /api/handle-choice` - Processes user keypad input
 - `GET /api/index` - Health check endpoint
 
-## Story Structure
+## Story System
 
-Stories are defined as a graph of nodes where each node contains:
-- `text` - The narrative spoken to the player
-- `choices` - Object mapping keypad digits to next story nodes
+### Story Structure
+
+Stories are stored in `/stories` directory as individual JavaScript files. Each story exports:
+- `storyInfo` - Metadata about the story (name, description, author, version)
+- `storyNodes` - Graph of story nodes where each node contains:
+  - `text` - The narrative spoken to the player
+  - `choices` - Object mapping keypad digits to next story nodes
 
 Terminal nodes (game endings) have empty `choices` objects.
+
+### Available Stories
+
+- **mystic-forest** - A magical adventure through an enchanted forest (default)
+- **space-adventure** - An exciting journey through the galaxy
+
+### Switching Stories
+
+Set the `STORY_NAME` environment variable in Vercel or your `.env` file:
+```
+STORY_NAME=space-adventure
+```
+
+### Creating New Stories
+
+See `/stories/README.md` for detailed instructions on creating custom stories.
 
 ## Development Notes
 
