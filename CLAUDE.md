@@ -39,6 +39,7 @@ The application requires these environment variables in `.env`:
 The application expects a Supabase table named `user_sessions` with:
 - `phone_number` (primary key) - Caller's phone number
 - `current_node` - Current position in the story
+- `previous_node` (optional) - Previous position for continue/restart functionality
 - `updated_at` - Last update timestamp
 
 ## Key Endpoints
@@ -68,3 +69,4 @@ Terminal nodes (game endings) have empty `choices` objects.
 - **Vercel Function Logs**: Monitor calls and errors in Vercel dashboard → Functions → Logs
 - **Supabase Dashboard**: View user sessions and database state directly
 - **Local Development**: Use `npm run dev` with ngrok for testing webhooks locally
+- Always ensure that a US vpn connection is enabled before fetching vercel as vercel (mysteriously) only loads from the US. The US vpn can be enabled with "nordvpn c us"

@@ -40,6 +40,14 @@ export default async function handler(req, res) {
       userSession = { current_node: 'start' };
     } else {
       console.log(`👋 Returning user at node: ${userSession.current_node}`);
+      // If user is at start, continue normally
+      // If user is in middle of game, offer continue/restart menu
+      if (userSession.current_node !== 'start') {
+        console.log('🔄 User has existing progress, showing continue/restart menu');
+        // Store their current progress before showing menu
+        await updateUserSession(phoneNumber, 'continue_menu', userSession.current_node);
+        userSession = { current_node: 'continue_menu', previous_node: userSession.current_node };
+      }
     }
 
     const currentNode = storyNodes[userSession.current_node];

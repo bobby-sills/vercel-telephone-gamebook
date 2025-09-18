@@ -40,10 +40,24 @@ export default async function handler(req, res) {
       const nextNode = currentNode.choices[choice];
 
       if (nextNode) {
-        // Valid choice - update user's position
-        console.log(`✅ Moving ${phoneNumber} from ${userSession.current_node} to ${nextNode}`);
-        await updateUserSession(phoneNumber, nextNode);
-        twiml.redirect('/api/voice');
+        // Handle special 'continue_game' choice
+        if (nextNode === 'continue_game') {
+          // Restore user to their previous position
+          const previousNode = userSession.previous_node;
+          if (previousNode) {
+            console.log(`🔄 Continuing game for ${phoneNumber} from ${previousNode}`);
+            await updateUserSession(phoneNumber, previousNode);
+          } else {
+            console.log(`⚠️ No previous node found for ${phoneNumber}, starting over`);
+            await updateUserSession(phoneNumber, 'start');
+          }
+          twiml.redirect('/api/voice');
+        } else {
+          // Valid choice - update user's position
+          console.log(`✅ Moving ${phoneNumber} from ${userSession.current_node} to ${nextNode}`);
+          await updateUserSession(phoneNumber, nextNode);
+          twiml.redirect('/api/voice');
+        }
       } else {
         // Invalid choice
         console.log(`❌ Invalid choice ${choice} for ${phoneNumber} at ${userSession.current_node}`);

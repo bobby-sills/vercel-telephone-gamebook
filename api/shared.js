@@ -10,6 +10,13 @@ const { twiml: { VoiceResponse } } = twilio;
 
 // Story data structure
 export const storyNodes = {
+  continue_menu: {
+    text: 'Welcome back! I see you were in the middle of an adventure. Press 1 to continue where you left off, or press 2 to start a brand new adventure.',
+    choices: {
+      '1': 'continue_game',
+      '2': 'start'
+    }
+  },
   start: {
     text: 'Welcome to the Mystic Forest Adventure! You find yourself at a crossroads. Press 1 to go left toward the dark cave, or press 2 to go right toward the sunny meadow.',
     choices: {
@@ -82,16 +89,23 @@ export async function getUserSession(phoneNumber) {
   }
 }
 
-export async function updateUserSession(phoneNumber, currentNode) {
+export async function updateUserSession(phoneNumber, currentNode, previousNode = null) {
   try {
     const supabase = createSupabaseClient();
+    const updateData = {
+      phone_number: phoneNumber,
+      current_node: currentNode,
+      updated_at: new Date().toISOString()
+    };
+
+    // Store previous node if provided (for continue/restart functionality)
+    if (previousNode !== null) {
+      updateData.previous_node = previousNode;
+    }
+
     const { error } = await supabase
       .from('user_sessions')
-      .upsert({
-        phone_number: phoneNumber,
-        current_node: currentNode,
-        updated_at: new Date().toISOString()
-      }, {
+      .upsert(updateData, {
         onConflict: 'phone_number'
       });
 
