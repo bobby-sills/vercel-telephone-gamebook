@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   // Validate phone number format
   if (!validatePhoneNumber(phoneNumber)) {
     console.error(`🚫 Invalid phone number format: ${phoneNumber}`);
-    twiml.say({ voice: 'alice' }, "Sorry, there was an issue with your phone number.");
+    twiml.say({ voice: 'alice' }, 'Sorry, there was an issue with your phone number.');
     twiml.hangup();
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send(twiml.toString());
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   // Check rate limit (20 requests per minute per phone number)
   if (!checkRateLimit(phoneNumber, 20, 60000)) {
     console.error(`🚫 Rate limit exceeded for: ${phoneNumber}`);
-    twiml.say({ voice: 'alice' }, "You're calling too frequently. Please wait a moment and try again.");
+    twiml.say({ voice: 'alice' }, 'You\'re calling too frequently. Please wait a moment and try again.');
     twiml.hangup();
     res.setHeader('Content-Type', 'text/xml');
     return res.status(200).send(twiml.toString());
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       console.error(`❌ Invalid node: ${userSession.current_node}`);
       // Reset to start if we hit an invalid node
       await updateUserSession(phoneNumber, 'start');
-      twiml.say({ voice: 'alice' }, "Something went wrong. Let's start over.");
+      twiml.say({ voice: 'alice' }, 'Something went wrong. Let\'s start over.');
       twiml.redirect('/api/voice');
     } else {
       // Speak the story text
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
 
       // If there are choices, gather input
       if (Object.keys(currentNode.choices).length > 0) {
-        const gather = twiml.gather({
+        twiml.gather({
           numDigits: 1,
           action: '/api/handle-choice',
           method: 'POST',
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
         twiml.say({
           voice: 'alice',
           rate: '0.9'
-        }, "Please make your choice now.");
+        }, 'Please make your choice now.');
 
         // If no input received, repeat the options
         twiml.redirect('/api/voice');
@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Error in /api/voice endpoint:', error);
-    twiml.say({ voice: 'alice' }, "Sorry, something went wrong. Please try calling back.");
+    twiml.say({ voice: 'alice' }, 'Sorry, something went wrong. Please try calling back.');
     twiml.hangup();
   }
 

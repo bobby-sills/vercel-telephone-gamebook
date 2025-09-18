@@ -1,17 +1,6 @@
 // Debug endpoint to check database
 import { createSupabaseClient } from './shared.js';
 
-function maskPhoneNumber(phone) {
-  if (!phone) return 'Unknown';
-  const cleaned = phone.replace(/\s+/g, '');
-  if (cleaned.length < 4) return '***';
-
-  // Show only last 4 digits: +1234567890 → +1234***7890
-  const start = cleaned.slice(0, -4);
-  const end = cleaned.slice(-4);
-  const masked = start.slice(0, 2) + '***' + end;
-  return masked;
-}
 
 export default async function handler(req, res) {
   // Require authentication - no public access

@@ -22,7 +22,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 // Test database connection on startup
 async function testConnection() {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('user_sessions')
       .select('id')
       .limit(1);
@@ -45,36 +45,36 @@ app.use(express.urlencoded({ extended: false }));
 // Story data structure
 const storyNodes = {
   start: {
-    text: "Welcome to the Mystic Forest Adventure! You find yourself at a crossroads. Press 1 to go left toward the dark cave, or press 2 to go right toward the sunny meadow.",
+    text: 'Welcome to the Mystic Forest Adventure! You find yourself at a crossroads. Press 1 to go left toward the dark cave, or press 2 to go right toward the sunny meadow.',
     choices: {
       '1': 'cave',
       '2': 'meadow'
     }
   },
   cave: {
-    text: "You enter the dark cave and hear strange noises. Press 1 to investigate the sounds, or press 2 to turn back.",
+    text: 'You enter the dark cave and hear strange noises. Press 1 to investigate the sounds, or press 2 to turn back.',
     choices: {
       '1': 'monster',
       '2': 'start'
     }
   },
   meadow: {
-    text: "You walk into a beautiful sunny meadow filled with flowers. Press 1 to pick flowers, or press 2 to rest under a tree.",
+    text: 'You walk into a beautiful sunny meadow filled with flowers. Press 1 to pick flowers, or press 2 to rest under a tree.',
     choices: {
       '1': 'flowers',
       '2': 'rest'
     }
   },
   monster: {
-    text: "Oh no! You've awakened a sleeping dragon! The adventure ends here. Thanks for playing! Goodbye.",
+    text: 'Oh no! You\'ve awakened a sleeping dragon! The adventure ends here. Thanks for playing! Goodbye.',
     choices: {}
   },
   flowers: {
-    text: "You pick beautiful flowers and find a magic potion! You win! Thanks for playing! Goodbye.",
+    text: 'You pick beautiful flowers and find a magic potion! You win! Thanks for playing! Goodbye.',
     choices: {}
   },
   rest: {
-    text: "You rest peacefully and feel refreshed. Press 1 to explore more of the meadow, or press 2 to return to the crossroads.",
+    text: 'You rest peacefully and feel refreshed. Press 1 to explore more of the meadow, or press 2 to return to the crossroads.',
     choices: {
       '1': 'flowers',
       '2': 'start'
@@ -168,7 +168,7 @@ app.post('/voice', async (req, res) => {
       console.error(`❌ Invalid node: ${userSession.current_node}`);
       // Reset to start if we hit an invalid node
       await updateUserSession(phoneNumber, 'start');
-      twiml.say({ voice: 'alice' }, "Something went wrong. Let's start over.");
+      twiml.say({ voice: 'alice' }, 'Something went wrong. Let\'s start over.');
       twiml.redirect('/voice');
     } else {
       // Speak the story text
@@ -179,7 +179,7 @@ app.post('/voice', async (req, res) => {
 
       // If there are choices, gather input
       if (Object.keys(currentNode.choices).length > 0) {
-        const gather = twiml.gather({
+        twiml.gather({
           numDigits: 1,
           action: '/handle-choice',
           method: 'POST',
@@ -190,7 +190,7 @@ app.post('/voice', async (req, res) => {
         twiml.say({
           voice: 'alice',
           rate: '0.9'
-        }, "Please make your choice now.");
+        }, 'Please make your choice now.');
 
         // If no input received, repeat the options
         twiml.redirect('/voice');
@@ -203,7 +203,7 @@ app.post('/voice', async (req, res) => {
     }
   } catch (error) {
     console.error('Error in /voice endpoint:', error);
-    twiml.say({ voice: 'alice' }, "Sorry, something went wrong. Please try calling back.");
+    twiml.say({ voice: 'alice' }, 'Sorry, something went wrong. Please try calling back.');
     twiml.hangup();
   }
 
@@ -236,7 +236,7 @@ app.post('/handle-choice', async (req, res) => {
         console.log(`❌ Invalid choice ${choice} for ${phoneNumber} at ${userSession.current_node}`);
         twiml.say({
           voice: 'alice'
-        }, "Sorry, that's not a valid option. Let me repeat the choices.");
+        }, 'Sorry, that\'s not a valid option. Let me repeat the choices.');
         twiml.redirect('/voice');
       }
     } else {
@@ -247,7 +247,7 @@ app.post('/handle-choice', async (req, res) => {
     }
   } catch (error) {
     console.error('Error in /handle-choice endpoint:', error);
-    twiml.say({ voice: 'alice' }, "Sorry, something went wrong. Let me restart the game.");
+    twiml.say({ voice: 'alice' }, 'Sorry, something went wrong. Let me restart the game.');
     await updateUserSession(phoneNumber, 'start');
     twiml.redirect('/voice');
   }
@@ -291,5 +291,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Debug endpoint: http://localhost:${PORT}/debug`);
-  console.log(`🌐 Make sure to expose this server for Twilio webhooks`);
+  console.log('🌐 Make sure to expose this server for Twilio webhooks');
 });

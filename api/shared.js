@@ -11,36 +11,36 @@ const { twiml: { VoiceResponse } } = twilio;
 // Story data structure
 export const storyNodes = {
   start: {
-    text: "Welcome to the Mystic Forest Adventure! You find yourself at a crossroads. Press 1 to go left toward the dark cave, or press 2 to go right toward the sunny meadow.",
+    text: 'Welcome to the Mystic Forest Adventure! You find yourself at a crossroads. Press 1 to go left toward the dark cave, or press 2 to go right toward the sunny meadow.',
     choices: {
       '1': 'cave',
       '2': 'meadow'
     }
   },
   cave: {
-    text: "You enter the dark cave and hear strange noises. Press 1 to investigate the sounds, or press 2 to turn back.",
+    text: 'You enter the dark cave and hear strange noises. Press 1 to investigate the sounds, or press 2 to turn back.',
     choices: {
       '1': 'monster',
       '2': 'start'
     }
   },
   meadow: {
-    text: "You walk into a beautiful sunny meadow filled with flowers. Press 1 to pick flowers, or press 2 to rest under a tree.",
+    text: 'You walk into a beautiful sunny meadow filled with flowers. Press 1 to pick flowers, or press 2 to rest under a tree.',
     choices: {
       '1': 'flowers',
       '2': 'rest'
     }
   },
   monster: {
-    text: "Oh no! You've awakened a sleeping dragon! The adventure ends here. Thanks for playing! Goodbye.",
+    text: 'Oh no! You\'ve awakened a sleeping dragon! The adventure ends here. Thanks for playing! Goodbye.',
     choices: {}
   },
   flowers: {
-    text: "You pick beautiful flowers and find a magic potion! You win! Thanks for playing! Goodbye.",
+    text: 'You pick beautiful flowers and find a magic potion! You win! Thanks for playing! Goodbye.',
     choices: {}
   },
   rest: {
-    text: "You rest peacefully and feel refreshed. Press 1 to explore more of the meadow, or press 2 to return to the crossroads.",
+    text: 'You rest peacefully and feel refreshed. Press 1 to explore more of the meadow, or press 2 to return to the crossroads.',
     choices: {
       '1': 'flowers',
       '2': 'start'
