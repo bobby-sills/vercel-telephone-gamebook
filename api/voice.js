@@ -47,10 +47,15 @@ export default async function handler(req, res) {
         await reloadStory(userSession.story_name);
       }
 
-      // If user is at start, continue normally
-      // If user is in middle of game, offer continue/restart menu
-      if (userSession.current_node !== 'start' && userSession.current_node !== 'story_selection') {
-        console.log('🔄 User has existing progress, showing continue/restart menu');
+      // Only show continue menu for initial incoming calls (not internal redirects)
+      // Initial calls have CallStatus='ringing' or 'in-progress' and Direction='inbound'
+      // Internal redirects typically don't have these parameters or have different values
+      const isInitialCall = req.body.Direction === 'inbound' &&
+                           (req.body.CallStatus === 'ringing' || req.body.CallStatus === 'in-progress');
+
+      // Only offer continue/restart if this is an initial inbound call with existing progress
+      if (isInitialCall && userSession.current_node !== 'start' && userSession.current_node !== 'story_selection' && userSession.current_node !== 'continue_menu') {
+        console.log('🔄 Initial inbound call detected with existing progress, showing continue/restart menu');
         // Store their current progress before showing menu
         await updateUserSession(phoneNumber, 'continue_menu', userSession.current_node);
         userSession = { current_node: 'continue_menu', previous_node: userSession.current_node };
